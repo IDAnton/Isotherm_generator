@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import utils
+import os
 
 mpl.use('TkAgg')
 
@@ -56,8 +57,12 @@ class Generator:
         plt.plot(self.pressures_d, self.n_s, marker=".")
         plt.show()
 
+    def plot_distribution(self):
+        plt.plot(self.pore_sizes_d, self.pore_distribution, marker=".")
+        plt.show()
+
     def generate_picture(self, resolution):
-        self.picture = np.zeros((resolution, resolution))
+        self.picture = np.zeros((resolution, resolution), dtype=np.bool_)
         utils.graph_to_picture(self.n_s, self.pressures_s, resolution, self.picture)
         utils.graph_to_picture(self.n_d, self.pressures_d, resolution, self.picture)
 
@@ -66,12 +71,48 @@ class Generator:
         plt.imshow(self.picture, cmap='gray', origin='lower')
         plt.show()
 
+    def save_picture(self, params, pic_folder, params_folder, ID):
+        if not os.path.exists(pic_folder):
+            os.makedirs(pic_folder)
+        if not os.path.exists(params_folder):
+            os.makedirs(params_folder)
+        np.save(os.path.join(pic_folder, ID), self.picture)
+        np.save(os.path.join(params_folder, ID), params)
+
+
+def generate_data_set(sub_folder, base_folder="data"):
+    gen = Generator()
+    d0_1_range = np.linspace(1, 10, 100)
+    d0_2_range = np.linspace(40, 60, 10)
+    sigma1 = 3
+    sigma2 = 3
+
+    ID = 0
+    pictures = np.empty((100 * 10, 100, 100))
+    for d0_1 in d0_1_range:
+        for d0_2 in d0_2_range:
+            gen.generate_pore_distribution(sigma1=sigma1, sigma2=sigma2, d0_1=d0_1, d0_2=d0_2)
+            gen.calculate_isotherms()
+            gen.smooth_out_points()
+            gen.normalize_data()
+            gen.generate_picture(resolution=100)
+            #gen.save_picture([sigma1, sigma2, d0_1, d0_2], f"data/{sub_folder}/pic", f"data/{sub_folder}/params", ID=f"{ID}")
+            pictures[ID] = gen.picture
+            ID += 1
+    np.save("test_array_2", pictures)
+
 
 if __name__ == "__main__":
-    gen = Generator()
-    gen.generate_pore_distribution(sigma1=2, sigma2=5, d0_1=9, d0_2=20)
-    gen.calculate_isotherms()
-    gen.smooth_out_points()
-    gen.normalize_data()
-    gen.generate_picture(100)
-    gen.plot_picture()
+    pass
+    import time
+    now = time.time()
+    generate_data_set(sub_folder="test")
+    print(time.time() - now)
+    #gen = Generator()
+    #gen.generate_pore_distribution(sigma1=3, sigma2=3, d0_1=3, d0_2=20)
+    #gen.plot_distribution()
+    # gen.calculate_isotherms()
+    # gen.smooth_out_points()
+    # gen.normalize_data()
+    # gen.generate_picture(100)
+    # gen.save_picture([2, 5, 9, 20], "data/test/pic", "data/test/params", ID="TEST.txt")
