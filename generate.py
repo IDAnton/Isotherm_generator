@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import utils
 import os
+import time
 
 mpl.use('TkAgg')
 
@@ -83,12 +84,12 @@ class Generator:
 def generate_data_set(sub_folder, base_folder="data"):
     gen = Generator()
     d0_1_range = np.linspace(1, 10, 100)
-    d0_2_range = np.linspace(40, 60, 10)
+    d0_2_range = np.linspace(25, 60, 100)
     sigma1 = 3
     sigma2 = 3
 
-    ID = 0
-    pictures = np.empty((100 * 10, 100, 100))
+    pictures = []
+    params = []
     for d0_1 in d0_1_range:
         for d0_2 in d0_2_range:
             gen.generate_pore_distribution(sigma1=sigma1, sigma2=sigma2, d0_1=d0_1, d0_2=d0_2)
@@ -97,17 +98,18 @@ def generate_data_set(sub_folder, base_folder="data"):
             gen.normalize_data()
             gen.generate_picture(resolution=100)
             #gen.save_picture([sigma1, sigma2, d0_1, d0_2], f"data/{sub_folder}/pic", f"data/{sub_folder}/params", ID=f"{ID}")
-            pictures[ID] = gen.picture
-            ID += 1
-    np.save("test_array_2", pictures)
+            pictures.append(gen.picture)
+            params.append([sigma1, sigma2, d0_1, d0_2])
+
+    path = f"{base_folder}/{sub_folder}"
+    if not os.path.exists(path):
+        os.makedirs(path)
+    np.save(f"{path}/{sub_folder}_x", pictures)
+    np.save(f"{path}/{sub_folder}_y", params)
 
 
 if __name__ == "__main__":
-    pass
-    import time
-    now = time.time()
     generate_data_set(sub_folder="test")
-    print(time.time() - now)
     #gen = Generator()
     #gen.generate_pore_distribution(sigma1=3, sigma2=3, d0_1=3, d0_2=20)
     #gen.plot_distribution()
